@@ -113,7 +113,7 @@ class RLM(LikelihoodModel):
 
     def __init__(self, endog, exog, M=norms.HuberT()):
         self.M = M
-        self._data = _handle_data(endog, exog)
+        super(LikelihoodModel, self).__init__(endog, exog)
         self._initialize()
 
     def _initialize(self):
@@ -145,8 +145,8 @@ class RLM(LikelihoodModel):
         """
         Returns the (unnormalized) log-likelihood from the M estimator.
         """
-        return self.M((self.endog - tmp_results.fittedvalues)/\
-                    tmp_results.scale).sum()
+        return self.M((self.endog - tmp_results.fittedvalues) /
+                          tmp_results.scale).sum()
 
     def _update_history(self, tmp_results):
         self.history['deviance'].append(self.deviance(tmp_results))
@@ -217,6 +217,8 @@ class RLM(LikelihoodModel):
         results : object
             scikits.statsmodels.rlm.RLMresults
         """
+        import scikits.statsmodels.interface.wrapper as wrapper
+
         if not cov.upper() in ["H1","H2","H3"]:
             raise ValueError("Covariance matrix %s not understood" % cov)
         else:
@@ -253,7 +255,8 @@ class RLM(LikelihoodModel):
             self.iteration += 1
         results = RLMResults(self, wls_results.params,
                             self.normalized_cov_params, self.scale)
-        return results
+
+        return wrapper.RLMResultsWrapper(results)
 
 class RLMResults(LikelihoodModelResults):
     """
