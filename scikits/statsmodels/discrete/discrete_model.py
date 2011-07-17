@@ -19,15 +19,17 @@ W. Greene. `Econometric Analysis`. Prentice Hall, 5th. edition. 2003.
 __all__ = ["Poisson","Logit","Probit","MNLogit"]
 
 import numpy as np
-from scikits.statsmodels.base.model import (LikelihoodModel,
-        LikelihoodModelResults)
-import scikits.statsmodels.tools.tools as tools
-from scikits.statsmodels.tools.decorators import (resettable_cache,
-        cache_readonly)
-from scikits.statsmodels.regression.linear_model import OLS
 from scipy import stats, special, optimize # opt just for nbin
 from scipy.misc import factorial
+
+import scikits.statsmodels.tools.tools as tools
+from scikits.statsmodels.tools.decorators import (resettable_cache,
+                                                  cache_readonly)
 #import numdifftools as nd #This will be removed when all have analytic hessians
+
+import scikits.statsmodels.base.model as base
+import scikits.statsmodels.regression.linear_model as lm
+import scikits.statsmodels.wrapper as wrap
 
 #TODO: add options for the parameter covariance/variance
 # ie., OIM, EIM, and BHHH see Green 21.4
@@ -92,7 +94,7 @@ def _iscount(X):
     remainder -= dummy
     return remainder
 
-class DiscreteModel(LikelihoodModel):
+class DiscreteModel(base.LikelihoodModel):
     """
     Abstract class for discrete choice models.
 
@@ -143,9 +145,9 @@ class DiscreteModel(LikelihoodModel):
         if isinstance(self, MNLogit):
             mlefit.params = mlefit.params.reshape(-1, self.exog.shape[1])
         discretefit = DiscreteResults(self, mlefit)
-        return wrapper.DiscreteResultsWrapper(discretefit)
+        return DiscreteResultsWrapper(discretefit)
 
-    fit.__doc__ += LikelihoodModel.fit.__doc__
+    fit.__doc__ += base.LikelihoodModel.fit.__doc__
 
     def predict(self, exog=None, linear=False):
         """
@@ -985,7 +987,7 @@ class NBin(DiscreteModel):
 
 #class DiscreteResults(object):
 #TODO: these need to return z scores
-class DiscreteResults(LikelihoodModelResults):
+class DiscreteResults(base.LikelihoodModelResults):
     """
     A results class for the discrete dependent variable models.
 
@@ -1116,11 +1118,12 @@ class DiscreteResults(LikelihoodModelResults):
     def conf_int(self, alpha=.05, cols=None):
         if hasattr(self.model, "J"):
             confint = super(DiscreteResults, self).conf_int(alpha=alpha,
-                    cols=cols)
-            return confint.transpose(0,2,1).reshape(self.model.J-1,self.model.K,2)
+                                                            cols=cols)
+            return confint.transpose(0,2,1).reshape(self.model.J-1,
+                                                    self.model.K, 2)
         else:
             return super(DiscreteResults, self).conf_int(alpha=alpha, cols=cols)
-    conf_int.__doc__ = LikelihoodModelResults.conf_int.__doc__
+    conf_int.__doc__ = base.LikelihoodModelResults.conf_int.__doc__
 
     @cache_readonly
     def tvalues(self):
@@ -1138,7 +1141,8 @@ class DiscreteResults(LikelihoodModelResults):
         ----------
         at : str, optional
             Options are:
-            - 'overall', The average of the marginal effects at each observation.
+            - 'overall', The average of the marginal effects at each
+              observation.
             - 'mean', The marginal effects at the mean of each regressor.
             - 'median', The marginal effects at the median of each regressor.
             - 'zero', The marginal effects at zero for each regressor.
@@ -1302,6 +1306,11 @@ class DiscreteResults(LikelihoodModelResults):
         self.margfx_se = None
         self.margfx = effects
         return effects
+
+class DiscreteResultsWrapper(lm.RegressionResultsWrapper):
+    pass
+wrap.populate_wrapper(DiscreteResultsWrapper, DiscreteResults)
+
 
 if __name__=="__main__":
     import numpy as np
