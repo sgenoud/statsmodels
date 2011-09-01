@@ -1230,6 +1230,9 @@ class LikelihoodModelResults(Results):
             upper = self.params[cols] + dist.ppf(1-alpha/2) * bse[cols]
         return np.asarray(zip(lower,upper))
 
+    @cache_readonly
+    def llf(self):
+        return self.model.loglike(self.params)
 
 class LikelihoodResultsWrapper(wrap.ResultsWrapper):
     _attrs = {

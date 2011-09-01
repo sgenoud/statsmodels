@@ -1051,11 +1051,6 @@ class DiscreteResults(base.LikelihoodModelResults):
             return bse.reshape(self.params.shape)
 
     @cache_readonly
-    def llf(self):
-        model = self.model
-        return model.loglike(self.params)
-
-    @cache_readonly
     def prsquared(self):
         return 1 - self.llf/self.llnull
 
