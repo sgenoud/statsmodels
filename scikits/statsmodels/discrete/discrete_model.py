@@ -167,8 +167,8 @@ class DiscreteModel(base.LikelihoodModel):
         -----
         You must fit the model first.
         """
-        if self._results is None:
-            raise ValueError("You must fit the model first")
+        self._check_is_fit()
+
         if exog is None:
             exog = self.exog
         if not linear:

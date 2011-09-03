@@ -261,13 +261,17 @@ Should be of length %s, if sigma is a 1d array" % nobs)
         """
         #JP: this doesn't look correct for GLMAR
         #SS: it needs its own predict method
-        if self._results is None and params is None:
-            raise ValueError("If the model has not been fit, then you must "
+        try:
+            self._check_is_fit()
+        except:
+            if params is None:
+                raise ValueError("If the model has not been fit, then you must "
                              "specify the params argument.")
-        if self._results is not None:
-            return np.dot(exog, self._results.params)
-        else:
-            return np.dot(exog, params)
+
+        if params is None:
+            params = self._results.params
+
+        return np.dot(exog, params)
 
     def loglike(self, params):
         """

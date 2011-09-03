@@ -332,11 +332,14 @@ class GLM(base.LikelihoodModel):
         -----
         If the model as not yet been fit, params is not optional.
         """
-        if self._results is None and params is None:
-            raise ValueError("If the model has not been fit, then you must \
-specify the params argument.")
-        if self._results is not None:
-            params = self.results.params
+        try:
+            self._check_is_fit()
+        except:
+            if params is None:
+                raise ValueError("If the model has not been fit, then you must "
+                                 "specify the params argument.")
+        if params is None:
+            params = self._results.params
         if linear:
             return np.dot(exog, params)
         else:
@@ -414,6 +417,7 @@ returned a nan.  This could be a boundary problem and should be reported.")
         glm_results = GLMResults(self, wls_results.params,
                                  wls_results.normalized_cov_params,
                                  self.scale)
+        self._results = glm_results
         return GLMResultsWrapper(glm_results)
 
 class GLMResults(base.LikelihoodModelResults):
@@ -504,10 +508,6 @@ class GLMResults(base.LikelihoodModelResults):
     def __init__(self, model, params, normalized_cov_params, scale):
         super(GLMResults, self).__init__(model, params,
                 normalized_cov_params=normalized_cov_params, scale=scale)
-        self.model._results = self.model.results = self # TODO: get rid of this
-                                                      # since results isn't a
-                                                      # property for GLM
-        # above is needed for model.predict
         self.family = model.family
         self._endog = model.endog
         self.nobs = model.endog.shape[0]

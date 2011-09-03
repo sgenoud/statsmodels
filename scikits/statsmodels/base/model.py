@@ -57,6 +57,10 @@ class Model(object):
         """
         raise NotImplementedError
 
+    def _check_is_fit(self):
+        if self._results is None:
+            raise ValueError("You must fit the model first")
+
 class LikelihoodModel(Model):
     """
     Likelihood model is a subclass of Model.
